@@ -1,10 +1,20 @@
 import express from 'express';
-import redis from 'redis';
+import { createClient } from 'redis';
 import { processFii, processStock } from './scrap.js';
 
 const app = express();
 
-const redisClient = redis.createClient();
+const redisClient = createClient({
+  socket: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: Number(process.env.REDIS_PORT) || 6379,
+  },
+  password: process.env.REDIS_PASSWORD || '',
+  database: Number(process.env.REDIS_DB_SUFFIX) || 0,
+});
+
+redisClient.on('connect', () => console.log('Connected to Redis!'));
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
 redisClient.connect().catch(console.error);
 
 const API_TOKEN = process.env.API_TOKEN;
@@ -18,8 +28,8 @@ const authenticate = (req, res, next) => {
 };
 app.use(authenticate);
 
-const CACHE_EXPIRATION = process.env.CACHE_EXPIRATION;
-const REFRESH_THRESHOLD = process.env.REFRESH_THRESHOLD;
+const CACHE_EXPIRATION = Number(process.env.CACHE_EXPIRATION) || 3600;
+const REFRESH_THRESHOLD = Number(process.env.REFRESH_THRESHOLD) || 300;
 
 app.get('/fii/:code', async (req, res) => {
   const code = req.params.code;
@@ -104,10 +114,10 @@ const refreshCache = async () => {
   }
 };
 
-if(process.env.AUTO_REFRESH_CACHE) {
-  setInterval(refreshCache, process.env.AUTO_REFRESH_DELAY);
+if(process.env.AUTO_REFRESH_CACHE === 'true') {
+  setInterval(refreshCache, Number(process.env.AUTO_REFRESH_DELAY) || 600000);
 }
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on http://localhost:${process.env.PORT}`);
+app.listen(Number(process.env.PORT) || 3001, () => {
+  console.log(`Server is running on http://localhost:${process.env.PORT || 3001}`);
 });

@@ -10,16 +10,17 @@ const PUPPETEER_OPTIONS = {
     '--disable-background-networking',
     '--disable-extensions',
     '--mute-audio',
-    '--window-size=1920x1080',
+    '--window-size=1920,1080',
     '--disable-dev-shm-usage',
     '--disable-gpu',
     '--single-process',
     '--disable-popup-blocking',
   ],
   headless: 'new',
+  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
 };
 
-const queue = new PQueue({ concurrency: process.env.PQUEUE_CONCURRENCY });
+const queue = new PQueue({ concurrency: Number(process.env.PQUEUE_CONCURRENCY) || 7 });
 
 const browser = await puppeteer.launch(PUPPETEER_OPTIONS);
 
