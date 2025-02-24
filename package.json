@@ -20,7 +20,7 @@
   "dependencies": {
     "express": "^4.21.2",
     "p-queue": "^8.1.0",
-    "puppeteer": "^24.1.0",
+    "puppeteer-core": "^24.2.1",
     "redis": "^4.7.0"
   },
   "devDependencies": {
