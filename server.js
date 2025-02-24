@@ -52,7 +52,7 @@ app.get('/fii/:code', async (req, res) => {
     await redisClient.setEx(CACHE_KEY, CACHE_EXPIRATION, JSON.stringify(data));
     res.json(data);
   } catch (error) {
-    console.error(`Erro ao buscar dados para o código ${code}:`, error);
+    console.error(`Erro ao buscar dados para o código ${code}:`, error.stack);
     res.status(500).json({ error: 'Erro ao buscar dados.' });
   }
 });

@@ -1,23 +1,21 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
 import { parseMonetaryValue } from './utils.js';
 import PQueue from 'p-queue';
 
 const BASE_URL = 'https://investidor10.com.br';
 const PUPPETEER_OPTIONS = {
+  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
+  headless: true,
   args: [
     '--no-sandbox',
     '--disable-setuid-sandbox',
-    '--disable-background-networking',
-    '--disable-extensions',
-    '--mute-audio',
-    '--window-size=1920,1080',
     '--disable-dev-shm-usage',
+    '--disable-accelerated-2d-canvas',
     '--disable-gpu',
-    '--single-process',
-    '--disable-popup-blocking',
+    '--no-zygote',
+    '--disable-background-networking',
+    '--window-size=1920,1080',
   ],
-  headless: 'new',
-  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
 };
 
 const queue = new PQueue({ concurrency: Number(process.env.PQUEUE_CONCURRENCY) || 7 });
@@ -106,7 +104,7 @@ async function getFiiData(fiiCode) {
 
     return fiiData;
   } catch (error) {
-    console.error(`Erro ao processar o código ${fiiCode}:`, error.message);
+    console.error(`Erro ao processar o código ${fiiCode}:`, error.stack);
     return null;
   } finally {
     await page.close();
@@ -131,8 +129,8 @@ async function getStockData(stockCode) {
     }, parseMonetaryValueStr);
 
     await page.goto(`${BASE_URL}/stocks/${stockCode}`, {
-      waitUntil: 'domcontentloaded',
-      timeout: 15000,
+      waitUntil: 'networkidle2',
+      timeout: 30000,
     });
     await page.setViewport({ width: 1080, height: 1024 });
 
