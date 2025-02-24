@@ -41,7 +41,7 @@ async function getFiiData(fiiCode) {
 
     await page.goto(`${BASE_URL}/fiis/${fiiCode}`, {
       waitUntil: 'domcontentloaded',
-      timeout: 15000,
+      timeout: 30000,
     });
     await page.setViewport({ width: 1080, height: 1024 });
 
