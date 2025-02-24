@@ -1,9 +1,9 @@
 # ---------------------------- #
-# Etapa 1: Base com Node.js e Puppeteer
+# Etapa 1: Base com Node.js e Chromium
 FROM node:20.13.1-alpine AS base
 
-# Instalação das dependências necessárias para o Puppeteer
-RUN apk update && apk upgrade && apk add --no-cache \
+# Instalação do Chromium e dependências necessárias
+RUN apk update && apk add --no-cache \
     chromium \
     nss \
     freetype \
@@ -20,13 +20,16 @@ RUN apk update && apk upgrade && apk add --no-cache \
     --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main \
     --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
 
+# Variáveis de ambiente para o Puppeteer
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+    PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /app
 
-# Copia apenas os arquivos de dependências e instala para otimizar o cache
+# Copia apenas os arquivos de dependências para aproveitar o cache no Docker
 COPY package*.json ./
+
+# Instalação das dependências de produção
 RUN npm install --production
 
 # Copia o restante do código
@@ -41,14 +44,17 @@ WORKDIR /app
 COPY --from=base /app /app
 
 ENV NODE_ENV=production
-
 ARG PORT=3001
 ENV PORT=${PORT}
 
-# Garante permissões apropriadas no diretório da aplicação
-RUN mkdir -p /app && chmod -R 777 /app
+# Ajustes de permissões e diretórios temporários para melhor performance do Puppeteer
+RUN mkdir -p /app /tmp /app/.cache && chmod -R 777 /app /tmp /app/.cache
 
+# Melhora a performance do Chromium ao usar memória compartilhada
+VOLUME /dev/shm
+
+# Exposição da porta para a aplicação
 EXPOSE ${PORT}
 
-# Executa a aplicação com npm start
+# Comando para iniciar a aplicação
 CMD ["npm", "start"]
