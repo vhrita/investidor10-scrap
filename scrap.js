@@ -3,24 +3,44 @@ import { parseMonetaryValue } from './utils.js';
 import PQueue from 'p-queue';
 
 const BASE_URL = 'https://investidor10.com.br';
-const PUPPETEER_OPTIONS = {
-  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
-  headless: true,
-  args: [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-dev-shm-usage',
-    '--disable-accelerated-2d-canvas',
-    '--disable-gpu',
-    '--no-zygote',
-    '--disable-background-networking',
-    '--window-size=1920,1080',
-  ],
-};
 
 const queue = new PQueue({ concurrency: Number(process.env.PQUEUE_CONCURRENCY) || 7 });
 
-const browser = await puppeteer.launch(PUPPETEER_OPTIONS);
+async function getBrowser() {
+  const chromiumWsEndpoint = process.env.CHROMIUM_WS_ENDPOINT;
+
+  try {
+    if (chromiumWsEndpoint) {
+      console.log(`🔗 Conectando ao Chromium via WebSocket: ${chromiumWsEndpoint}`);
+      return await puppeteer.connect({ browserWSEndpoint: chromiumWsEndpoint });
+    }
+
+    const chromiumExecPath = process.env.CHROMIUM_EXEC_PATH || '/usr/bin/chromium-browser';
+    console.log(`🚀 Iniciando Chromium localmente com caminho: ${chromiumExecPath}`);
+
+    const PUPPETEER_OPTIONS = {
+      executablePath: chromiumExecPath,
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+        '--no-zygote',
+        '--disable-background-networking',
+        '--window-size=1920,1080',
+      ],
+    };
+
+    return await puppeteer.launch(PUPPETEER_OPTIONS);
+  } catch (error) {
+    console.error('❌ Falha ao iniciar o navegador:', error);
+    throw error;
+  }
+}
+
+const browser = await getBrowser();
 
 async function getFiiData(fiiCode) {
   const page = await browser.newPage();
